@@ -4,7 +4,8 @@ export function playCompletionSound(enabled: boolean) {
   if (!enabled) return;
   try {
     if (!audioCtx) {
-      audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      audioCtx = new Ctor();
     }
     if (audioCtx.state === 'suspended') {
       audioCtx.resume();

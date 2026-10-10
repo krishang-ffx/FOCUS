@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useSettings } from '@/context/SettingsContext';
 import {
-  LogOut, Clock, Sun, Moon, Bell, Type, Gauge, User, ChevronRight,
+  LogOut, Clock, Sun, Moon, Bell, Type, Gauge, User,
   AlertTriangle, Trash2,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';

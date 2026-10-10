@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase';
 import { Clock, Timer as TimerIcon, TrendingUp, Calendar, Target, Activity } from 'lucide-react';
 import type { TabKey } from '@/App';
 import type { TimerSession } from '@/types/timer';
-import { formatDuration, isSameDay, dateKey } from '@/lib/format';
+import { formatDuration, dateKey } from '@/lib/format';
 import { CATEGORIES } from '@/types/timer';
 
 export function HomeScreen({ onNavigate }: { onNavigate: (tab: TabKey) => void }) {
