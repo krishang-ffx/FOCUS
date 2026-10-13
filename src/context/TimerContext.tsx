@@ -4,6 +4,7 @@ import {
   getLocalTimers,
   persistSession,
   removeLocalTimer,
+  saveToHistory,
   makeSession,
   startTimer,
   pauseTimer,
@@ -18,7 +19,6 @@ import {
 import { playCompletionSound } from '@/lib/sound';
 import { useAuth } from '@/context/AuthContext';
 import { useSettings } from '@/context/SettingsContext';
-import { supabase } from '@/lib/supabase';
 
 interface TimerContextValue {
   timers: TimerSession[];
@@ -70,6 +70,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
           const completed = completeTimer(t);
           timersRef.current[completed.id] = completed;
           persistSession(completed);
+          saveToHistory(completed);
           playCompletionSound(settings.soundEnabled);
           setTimers(Object.values(timersRef.current));
         }
@@ -80,7 +81,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   const updateAndPersist = useCallback(async (updated: TimerSession) => {
     timersRef.current[updated.id] = updated;
     setTimers(Object.values({ ...timersRef.current }));
-    await persistSession(updated);
+    persistSession(updated);
   }, []);
 
   const createTimer = useCallback(
@@ -89,7 +90,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       const session = makeSession(id, user?.id ?? '', name, durationMs, note, category);
       timersRef.current[id] = session;
       setTimers(Object.values({ ...timersRef.current }));
-      await persistSession(session);
+      persistSession(session);
       return id;
     },
     [user]
@@ -126,7 +127,9 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     async (id: string, note?: string) => {
       const t = timersRef.current[id];
       if (!t || t.status === 'created' || t.status === 'stopped') return;
-      await updateAndPersist(stopTimer(t, note));
+      const stopped = stopTimer(t, note);
+      await updateAndPersist(stopped);
+      saveToHistory(stopped);
     },
     [updateAndPersist]
   );
@@ -157,22 +160,18 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       const copy = duplicateSession(t, newId);
       timersRef.current[newId] = copy;
       setTimers(Object.values({ ...timersRef.current }));
-      await persistSession(copy);
+      persistSession(copy);
       return newId;
     },
     []
   );
 
+  // Delete only the active timer from localStorage. History is never touched.
   const remove = useCallback(
     async (id: string) => {
       delete timersRef.current[id];
       setTimers(Object.values({ ...timersRef.current }));
       removeLocalTimer(id);
-      try {
-        await supabase.from('timer_sessions').delete().eq('id', id);
-      } catch {
-        // ignore
-      }
     },
     []
   );
@@ -181,19 +180,11 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     const toDelete = Object.values(timersRef.current).filter(
       (t) => t.status === 'completed' || t.status === 'stopped'
     );
-    const ids = toDelete.map((t) => t.id);
-    for (const id of ids) {
-      delete timersRef.current[id];
-      removeLocalTimer(id);
+    for (const t of toDelete) {
+      delete timersRef.current[t.id];
+      removeLocalTimer(t.id);
     }
     setTimers(Object.values({ ...timersRef.current }));
-    if (ids.length > 0) {
-      try {
-        await supabase.from('timer_sessions').delete().in('id', ids);
-      } catch {
-        // ignore
-      }
-    }
   }, []);
 
   const deleteAll = useCallback(async () => {
@@ -202,13 +193,6 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     setTimers([]);
     for (const id of ids) {
       removeLocalTimer(id);
-    }
-    if (ids.length > 0) {
-      try {
-        await supabase.from('timer_sessions').delete().in('id', ids);
-      } catch {
-        // ignore
-      }
     }
   }, []);
 

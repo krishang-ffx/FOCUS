@@ -36,6 +36,24 @@ export interface TimerSession {
   updated_at: string;
 }
 
+export interface HistoryRecord {
+  id: string;
+  user_id: string;
+  timer_id: string;
+  name: string;
+  note: string | null;
+  category: TimerCategory | null;
+  status: 'completed' | 'stopped';
+  planned_duration_ms: number;
+  started_at: string | null;
+  ended_at: string | null;
+  pause_count: number;
+  total_paused_ms: number;
+  active_ms: number;
+  events: TimerEvent[];
+  created_at: string;
+}
+
 export interface TimerDraft {
   name: string;
   planned_duration_ms: number;

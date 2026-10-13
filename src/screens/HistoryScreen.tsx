@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Search, Calendar, X, ChevronLeft, Trash2, Filter, ArrowDownUp } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import type { TimerSession } from '@/types/timer';
+import type { HistoryRecord } from '@/types/timer';
 import { CATEGORIES } from '@/types/timer';
 import { useSettings } from '@/context/SettingsContext';
 import {
@@ -16,7 +16,7 @@ type SortOrder = 'newest' | 'oldest';
 
 export function HistoryScreen() {
   const { settings } = useSettings();
-  const [records, setRecords] = useState<TimerSession[]>([]);
+  const [records, setRecords] = useState<HistoryRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [nameFilter, setNameFilter] = useState('');

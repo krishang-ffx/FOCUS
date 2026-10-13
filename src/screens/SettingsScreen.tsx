@@ -6,7 +6,7 @@ import {
   AlertTriangle, Trash2,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { clearLocalTimers } from '@/lib/timerEngine';
+
 
 export function SettingsScreen() {
   const { user, signOut } = useAuth();
@@ -23,7 +23,6 @@ export function SettingsScreen() {
       if (error) {
         setClearStatus('Failed to clear history. Please try again.');
       } else {
-        clearLocalTimers();
         setClearStatus('History cleared successfully.');
       }
     } catch {

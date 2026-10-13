@@ -1,4 +1,4 @@
-import type { TimerSession, TimerStatus, TimerEvent, TimerCategory } from '@/types/timer';
+import type { TimerSession, TimerStatus, TimerEvent, TimerCategory, HistoryRecord } from '@/types/timer';
 import { supabase } from '@/lib/supabase';
 
 const LOCAL_KEY = 'chrono-timers';
@@ -62,14 +62,35 @@ export function clearLocalTimers() {
   }
 }
 
-export async function persistSession(session: TimerSession): Promise<void> {
+/**
+ * Persist the active timer state to localStorage ONLY.
+ * Active timers and history are now stored independently.
+ */
+export function persistSession(session: TimerSession): void {
   const local = loadLocal();
   local[session.id] = session;
   saveLocal(local);
+}
 
+export function removeLocalTimer(id: string) {
+  const local = loadLocal();
+  delete local[id];
+  saveLocal(local);
+}
+
+/**
+ * Save a completed or stopped session as a permanent history record
+ * to the Supabase database. This record has its own unique session ID
+ * and a timer_id linking back to the active timer. It is never
+ * overwritten or deleted when the timer is reset, restarted, or deleted.
+ */
+export async function saveToHistory(session: TimerSession): Promise<void> {
+  const historyId = crypto.randomUUID();
   try {
-    await supabase.from('timer_sessions').upsert({
-      id: session.id,
+    await supabase.from('timer_sessions').insert({
+      id: historyId,
+      user_id: session.user_id,
+      timer_id: session.id,
       name: session.name,
       note: session.note,
       category: session.category,
@@ -77,24 +98,14 @@ export async function persistSession(session: TimerSession): Promise<void> {
       planned_duration_ms: session.planned_duration_ms,
       started_at: session.started_at,
       ended_at: session.ended_at,
-      expected_end_at: session.expected_end_at,
-      paused_at: session.paused_at,
-      resumed_at: session.resumed_at,
       pause_count: session.pause_count,
       total_paused_ms: session.total_paused_ms,
       active_ms: session.active_ms,
       events: session.events,
-      updated_at: new Date().toISOString(),
     });
   } catch {
-    // Network errors are non-fatal — local state is preserved
+    // Network errors are non-fatal
   }
-}
-
-export function removeLocalTimer(id: string) {
-  const local = loadLocal();
-  delete local[id];
-  saveLocal(local);
 }
 
 export function makeSession(
@@ -299,5 +310,28 @@ export function resetTimer(session: TimerSession): TimerSession {
     active_ms: 0,
     events: [],
     updated_at: new Date().toISOString(),
+  };
+}
+
+/**
+ * Convert a database history row to a HistoryRecord.
+ */
+export function rowToHistory(row: Record<string, unknown>): HistoryRecord {
+  return {
+    id: row.id as string,
+    user_id: row.user_id as string,
+    timer_id: row.timer_id as string,
+    name: row.name as string,
+    note: (row.note as string | null) ?? null,
+    category: (row.category as TimerCategory | null) ?? null,
+    status: row.status as 'completed' | 'stopped',
+    planned_duration_ms: row.planned_duration_ms as number,
+    started_at: (row.started_at as string | null) ?? null,
+    ended_at: (row.ended_at as string | null) ?? null,
+    pause_count: row.pause_count as number,
+    total_paused_ms: row.total_paused_ms as number,
+    active_ms: row.active_ms as number,
+    events: (row.events as TimerEvent[]) ?? [],
+    created_at: row.created_at as string,
   };
 }
