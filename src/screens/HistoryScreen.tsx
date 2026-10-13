@@ -24,7 +24,7 @@ export function HistoryScreen() {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
-  const [selected, setSelected] = useState<TimerSession | null>(null);
+  const [selected, setSelected] = useState<HistoryRecord | null>(null);
 
   useEffect(() => {
     loadHistory();
@@ -37,7 +37,7 @@ export function HistoryScreen() {
       .select('*')
       .order('started_at', { ascending: false, nullsFirst: false });
     if (!error && data) {
-      setRecords(data as TimerSession[]);
+      setRecords(data as HistoryRecord[]);
     }
     setLoading(false);
   };
@@ -73,7 +73,7 @@ export function HistoryScreen() {
   }, [records, search, nameFilter, dateFilter, categoryFilter, sortOrder]);
 
   const grouped = useMemo(() => {
-    const groups: Record<string, TimerSession[]> = {};
+    const groups: Record<string, HistoryRecord[]> = {};
     for (const r of filtered) {
       const key = r.started_at ? formatDate(r.started_at) : 'No start date';
       if (!groups[key]) groups[key] = [];
@@ -294,7 +294,7 @@ export function HistoryScreen() {
 function HistoryDetail({
   session, use24h, onClose, onDelete,
 }: {
-  session: TimerSession;
+  session: HistoryRecord;
   use24h: boolean;
   onClose: () => void;
   onDelete: () => void;

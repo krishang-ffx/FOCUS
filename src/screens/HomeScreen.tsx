@@ -6,14 +6,14 @@ import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Clock, Timer as TimerIcon, TrendingUp, Calendar, Target, Activity } from 'lucide-react';
 import type { TabKey } from '@/App';
-import type { TimerSession } from '@/types/timer';
+import type { HistoryRecord } from '@/types/timer';
 import { formatDuration, dateKey } from '@/lib/format';
 import { CATEGORIES } from '@/types/timer';
 
 export function HomeScreen({ onNavigate }: { onNavigate: (tab: TabKey) => void }) {
   const { timers } = useTimers();
   const { user } = useAuth();
-  const [history, setHistory] = useState<TimerSession[]>([]);
+  const [history, setHistory] = useState<HistoryRecord[]>([]);
   const [loadingStats, setLoadingStats] = useState(true);
 
   useEffect(() => {
@@ -23,7 +23,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: TabKey) => void }
       .select('*')
       .order('started_at', { ascending: false, nullsFirst: false })
       .then(({ data }) => {
-        if (data) setHistory(data as TimerSession[]);
+        if (data) setHistory(data as HistoryRecord[]);
         setLoadingStats(false);
       });
   }, [user, timers]);
