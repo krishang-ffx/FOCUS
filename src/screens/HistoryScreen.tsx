@@ -35,6 +35,7 @@ export function HistoryScreen() {
     const { data, error } = await supabase
       .from('timer_sessions')
       .select('*')
+      .in('status', ['completed', 'stopped'])
       .order('started_at', { ascending: false, nullsFirst: false });
     if (!error && data) {
       setRecords(data as HistoryRecord[]);

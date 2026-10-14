@@ -21,6 +21,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: TabKey) => void }
     supabase
       .from('timer_sessions')
       .select('*')
+      .in('status', ['completed', 'stopped'])
       .order('started_at', { ascending: false, nullsFirst: false })
       .then(({ data }) => {
         if (data) setHistory(data as HistoryRecord[]);
